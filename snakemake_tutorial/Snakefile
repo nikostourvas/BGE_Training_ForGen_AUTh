@@ -10,12 +10,11 @@ rule fastqc_raw_reads:
     input:
         "raw_reads/{sample}.fastq"
     params:
-        out="fastqc_untrimmed_reads"
+        "fastqc_untrimmed_reads"
     output:
         "fastqc_untrimmed_reads/{sample}_fastqc.html",
-        "fastqc_untrimmed_reads/{sample}_fastqc.zip",
     shell:
-        "fastqc {input} -o {params.out}"
+        "fastqc {input} -o {params}"
         
 rule trim_reads:
     input:
@@ -30,12 +29,11 @@ rule fastqc_trimmed_reads:
     input:
         "trimmed_reads/{sample}_trim.fastq"
     params:
-        out="fastqc_trimmed_reads"
+        "fastqc_trimmed_reads"
     output:
         "fastqc_trimmed_reads/{sample}_trim_fastqc.html",
-        "fastqc_trimmed_reads/{sample}_trim_fastqc.zip",
     shell:
-        "fastqc {input} -o {params.out}"
+        "fastqc {input} -o {params}"
         
 # Generate a QC report for all evaluated samples
 rule multiqc:
