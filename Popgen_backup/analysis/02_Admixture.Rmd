@@ -1,0 +1,39 @@
+---
+title: "Cross-validation results from admixture"
+author: "Nikolaos Tourvas"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    code_download: yes
+    code_folding: show
+    theme: default
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, include=TRUE, cache=FALSE,
+                      dev = c("png", "pdf", "svg"), dpi = 300)
+```
+
+# Load libraries
+```{r}
+library(ggplot2)
+```
+
+# CV plot
+load the data
+```{r cv}
+cv <- read.table("../results/admixture/cv.error", header = FALSE)
+colnames(cv) <- c("K", "CV")
+```
+
+plot cv
+```{r cv_plot}
+ggplot(cv, aes(x=K, y=CV)) +
+  geom_point()+
+  geom_line() +
+  ylab("Cross-validaiton error")
+```
+

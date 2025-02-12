@@ -1,0 +1,137 @@
+---
+title: "Detection of adaptive SNPs"
+author: "Nikolaos Tourvas"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: 
+  html_document:
+    code_download: yes
+    code_folding: show
+    theme: default
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, include=TRUE, cache=FALSE,
+                      dev = c("png", "pdf", "svg"), dpi = 300)
+```
+
+# Setup
+```{bash}
+mkdir -p ../results/pcadapt
+```
+
+```{r}
+library(pcadapt)
+library(ggplot2)
+library(dplyr)
+# library(qvalue) # Needed for FDR multiple test correction
+```
+
+### pcadapt
+```{r}
+filename <- read.pcadapt(
+              "../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bed",
+              type = "bed")
+```
+
+```{r}
+obj_mat <- bed2matrix(bedfile = "../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bed")
+dim(obj_mat)
+```
+
+```{r diagnosticpcloading, fig.width=10, fig.height=10, include=T}
+x <- pcadapt(input = filename, 
+             K = 20, 
+             min.maf = 0.05,
+             ploidy = 2,
+             LD.clumping = list(size = 500, thr = 0.1)
+             )
+
+par(mfrow = c(2, 2))
+for (i in 1:4)
+  plot(x$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+```
+
+```{r screeplot}
+p1 <- plot(x, option = "screeplot")
+```
+
+```{r}
+# load strata information
+strata <- read.csv("../data/strata.csv", stringsAsFactors = TRUE)
+
+poplist.names <- strata[,2]
+```
+
+```{r pca}
+p2 <- plot(x, option = "scores", pop = poplist.names)
+p3 <- plot(x, option = "scores", i = 3, j = 4, pop = poplist.names)
+```
+
+```{r}
+# x <- pcadapt(filename, K = 2, min.maf = 0.05
+             # ,LD.clumping = list(size = 50000, thr = 0.1)
+# )
+summary(x)
+```
+
+```{r manhattan_plot}
+plot(x , option = "manhattan")
+```
+
+```{r qqplot}
+p4 <- plot(x, option = "qqplot")
+p4
+```
+
+```{r p_value_distribution}
+hist(x$pvalues, xlab = "p-values", main = NULL, breaks = 50, 
+           col = "orange")
+```
+
+```{r}
+p6 <- plot(x, option = "stat.distribution")
+p6
+```
+
+Multiple test correction
+```{r}
+# Bonferroni approach
+padj <- p.adjust(x$pvalues,method="bonferroni")
+alpha <- 0.01
+outliers <- which(padj < alpha)
+length(outliers)
+
+# FDR approach
+# qval <- qvalue(x$pvalues)$qvalues
+# alpha <- 0.01
+# outliers <- which(qval < alpha)
+# length(outliers)
+
+```
+
+```{r}
+bim <- read.table("../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bim",
+                  header = FALSE)
+str(bim)
+dim(bim)
+```
+
+# Write an output file
+```{r fig.width=10, fig.height= 5, eval=TRUE}
+pca_df <- data.frame(chr = bim$V1, 
+                     position = bim$V4, 
+                     pvalue = x$pvalues, 
+                     p.adj = padj)
+
+pca_df <- pca_df %>% 
+  filter(!is.na(pvalue)) %>% 
+  arrange(pvalue)
+
+
+pca_df
+write.csv(pca_df, file="../results/pcadapt/outliers_pcadapt.csv",
+          quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
