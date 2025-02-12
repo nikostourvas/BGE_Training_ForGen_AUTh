@@ -12,16 +12,22 @@ output:
     keep_md: yes
 ---
 
-```{r setup, include=TRUE}
+# Setup
+
+Our code is enclosed in code chunks. Each code chunk starts with {r}. The r indicates that the code is in R. 
+
+The code chunks can have options that control how the code is run and how the output is displayed. For example, the code chunk below has the options echo = TRUE, include=TRUE, cache=FALSE, dev = c("png", "pdf", "svg"), dpi = 300. These options mean that the code will be displayed in the output, the output will be included in the output, caching will be disabled, and the output will be saved as a png, pdf, and svg file with a resolution of 300 dpi.
+```{r setup}
 knitr::opts_chunk$set(echo = TRUE, include=TRUE, cache=FALSE,
                       dev = c("png", "pdf", "svg"), dpi = 300)
 ```
 
-# Setup
+Create the results folder
 ```{bash}
 mkdir -p ../results/pcadapt
 ```
 
+Load the R libraries we will need
 ```{r}
 library(pcadapt)
 library(ggplot2)
@@ -29,13 +35,19 @@ library(dplyr)
 # library(qvalue) # Needed for FDR multiple test correction
 ```
 
-### pcadapt
+# Load data
+PCAdapt supports importing bed files.
 ```{r}
 filename <- read.pcadapt(
               "../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bed",
               type = "bed")
 ```
 
+To evaluate if LD might be an issue for our dataset, we will display the loadings (contributions of each SNP to the PC) and  evaluate if the loadings are clustered in a single or several genomic regions.
+
+Hint: PCAdapt sets by default a minimum allele frequency (MAF) filter of 5%. Users can edit this filter as they deem necessary. After running the analysis, PCAdapt will produce P-values for each SNP, but will skip SNPs below MAF. Therefore the final list of P-values will contain NAs for rejected SNPs_
+
+You can try running the analysis with and without LD.clumping and see what effects it may have downstream.
 ```{r diagnosticpcloading, fig.width=10, fig.height=10, include=T}
 x <- pcadapt(input = filename, 
              K = 20, 
@@ -49,44 +61,51 @@ for (i in 1:4)
   plot(x$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
 ```
 
-```{r screeplot}
+# Decide how many PCA axes (K) to use
+Investigate screeplot  
+From PCAdapt help: The ‘scree plot’ displays in decreasing order the percentage of variance explained by each PC. Up to a constant, it corresponds to the eigenvalues in decreasing order. The ideal pattern in a scree plot is a steep curve followed by a bend and a straight line. The eigenvalues that correspond to random variation lie on a straight line whereas the ones that correspond to population structure lie on a steep curve. We recommend to keep PCs that correspond to eigenvalues to the left of the straight line (Cattell’s rule).
+
+Hint: You can also decide based on PCA plots for axes 3,4 or more.
+
+```{r screeplot, fig.width=5}
 p1 <- plot(x, option = "screeplot")
 ```
 
+load strata (metadata) information
 ```{r}
-# load strata information
 strata <- read.csv("../data/strata.csv", stringsAsFactors = TRUE)
 
 poplist.names <- strata[,2]
 ```
 
-```{r pca}
+plot PCA biplots
+```{r pca, fig.width=7}
 p2 <- plot(x, option = "scores", pop = poplist.names)
 p3 <- plot(x, option = "scores", i = 3, j = 4, pop = poplist.names)
 ```
 
+print summary statistics
 ```{r}
-# x <- pcadapt(filename, K = 2, min.maf = 0.05
-             # ,LD.clumping = list(size = 50000, thr = 0.1)
-# )
 summary(x)
 ```
 
-```{r manhattan_plot}
+Print Manhattan plot
+```{r manhattan_plot, fig.width = 8}
 plot(x , option = "manhattan")
 ```
 
-```{r qqplot}
+```{r qqplot, fig.width=7}
 p4 <- plot(x, option = "qqplot")
 p4
 ```
 
-```{r p_value_distribution}
+A histogram of p-values should show that most of the p-values follow a uniform distribution. The excess of small p-values indicates the presence of outliers.
+```{r p_value_distribution, fig.width=7}
 hist(x$pvalues, xlab = "p-values", main = NULL, breaks = 50, 
            col = "orange")
 ```
 
-```{r}
+```{r MahalanobisDist, fig.width=5}
 p6 <- plot(x, option = "stat.distribution")
 p6
 ```
@@ -107,6 +126,7 @@ length(outliers)
 
 ```
 
+Load more metadata about the polymorphisms
 ```{r}
 bim <- read.table("../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bim",
                   header = FALSE)
