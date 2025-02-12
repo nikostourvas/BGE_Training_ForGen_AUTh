@@ -36,11 +36,6 @@ filename <- read.pcadapt(
               type = "bed")
 ```
 
-```{r}
-obj_mat <- bed2matrix(bedfile = "../results/pcadapt/Phalepensis_filtSNPs_TARGET_GR_pops.bed")
-dim(obj_mat)
-```
-
 ```{r diagnosticpcloading, fig.width=10, fig.height=10, include=T}
 x <- pcadapt(input = filename, 
              K = 20, 
