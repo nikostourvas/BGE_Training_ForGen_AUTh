@@ -2,10 +2,10 @@ SAMPLES = ["A", "B"]
 
 rule all:
     input:
+        "calls/all.vcf",
         expand("fastqc_untrimmed_reads/{sample}_fastqc.html", sample=SAMPLES),
-        expand("multiqc_report.html"),
-        "calls/all.vcf"  
-  
+        "multiqc_report.html"
+
 rule fastqc_raw_reads:
     input:
         "raw_reads/{sample}.fastq"
@@ -15,7 +15,7 @@ rule fastqc_raw_reads:
         "fastqc_untrimmed_reads/{sample}_fastqc.html",
     shell:
         "fastqc {input} -o {params}"
-        
+
 rule trim_reads:
     input:
         "raw_reads/{sample}.fastq"
@@ -23,8 +23,7 @@ rule trim_reads:
         "trimmed_reads/{sample}_trim.fastq"
     shell:
         "trimmomatic SE {input} {output} SLIDINGWINDOW:4:20 MINLEN:25"
-
-# Evaluate the trimmed samples        
+        
 rule fastqc_trimmed_reads:
     input:
         "trimmed_reads/{sample}_trim.fastq"
@@ -35,7 +34,6 @@ rule fastqc_trimmed_reads:
     shell:
         "fastqc {input} -o {params}"
         
-# Generate a QC report for all evaluated samples
 rule multiqc:
     input:
         expand("fastqc_trimmed_reads/{sample}_trim_fastqc.html", sample=SAMPLES)
@@ -44,7 +42,7 @@ rule multiqc:
     output:
         "multiqc_report.html"
     shell:"multiqc {params} --force"
-        
+    
 rule bwa_map:
     input:
         "reference/genome.fa",
@@ -53,7 +51,7 @@ rule bwa_map:
         "mapped_reads/{sample}.bam"
     shell:
         "bwa mem {input} | samtools view -Sb - > {output}"
-
+        
 rule samtools_sort:
     input:
         "mapped_reads/{sample}.bam"
@@ -62,7 +60,7 @@ rule samtools_sort:
     shell:
         "samtools sort -T sorted_reads/{wildcards.sample} "
         "-O bam {input} > {output}"
-
+        
 rule samtools_index:
     input:
         "sorted_reads/{sample}.bam"
@@ -70,7 +68,7 @@ rule samtools_index:
         "sorted_reads/{sample}.bam.bai"
     shell:
         "samtools index {input}"
-
+        
 rule bcftools_call:
     input:
         fa="reference/genome.fa",
