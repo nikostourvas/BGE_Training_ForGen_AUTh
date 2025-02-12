@@ -1,0 +1,3 @@
+Sample	Unique Reads	Duplicate Reads
+A_trim	22151.0	47.0
+B_trim	21288.0	44.0

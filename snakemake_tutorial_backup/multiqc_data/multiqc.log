@@ -1,0 +1,2 @@
+[2025-02-10 20:11:40,061] multiqc.core.file_search                           [INFO   ]  Search path: /home/rstudio/working/snakemake_tutorial/fastqc_trimmed_reads
+[2025-02-10 20:11:40,141] multiqc.modules.fastqc.fastqc                      [INFO   ]  Found 2 reports

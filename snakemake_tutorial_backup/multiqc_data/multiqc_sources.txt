@@ -1,0 +1,3 @@
+Module	Section	Sample Name	Source
+FastQC	all_sections	B_trim	/home/rstudio/working/snakemake_tutorial/fastqc_trimmed_reads/B_trim_fastqc.zip
+FastQC	all_sections	A_trim	/home/rstudio/working/snakemake_tutorial/fastqc_trimmed_reads/A_trim_fastqc.zip
